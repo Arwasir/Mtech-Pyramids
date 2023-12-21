@@ -1,0 +1,66 @@
+input_file_path = "input.txt"
+output_file_path = "output.txt"
+with open(input_file_path, 'r', encoding='UTF-8') as file:
+    file_string = file.read()
+
+# Функция для сжатия строки из трегольников
+def compress_triangle(str_triangle: str) -> list:
+    triangle_list = list(str_triangle) # строка, преобразованная в список
+    # сжатие треугольников состоящих из 4 символьных треугольников
+    triangle_list = [
+        i[0][0]
+        if all(x == i[0] for x in i) and not any(j for j in triangle_list for x in j if x != j[0])
+        else i
+        for i in triangle_list
+    ]
+
+
+    prev_layer = 0 # начало предыдущего слоя треугольников
+    len_triangle = int(len(triangle_list) / 4) # количество треугольников после 1 шага сжатия
+    depth = int(len_triangle ** 0.5) # глубина треугольника
+    current_layer = (depth - 1) * 4 + 3 # кол-во символов в основании треугольника
+    next_layer = current_layer - 2 # следующий слой меньших треугольников всегда нечетный
+    compressed_list = [] # сжатые треугольники
+    crnt_triangle = 0 # сжимаемый треугольник на данном шаге
+
+    # цикл для прохождения всех треугольников по глубине
+    for i in range(depth):
+        curr_2layer_pos = 0 # позиция во 2 слое на данный момент
+        row_step = 3 # шаг прохождения по большим треугольникам, всегда начинается с 3
+        curr_1layer_pos = prev_layer # слой основания на первом шаге 1 слоя
+
+        # цикл для прохождения по одному слою
+        while curr_1layer_pos <= current_layer - 1:
+
+            temp = triangle_list[curr_1layer_pos:curr_1layer_pos + row_step] # часть треугольника из 1 слоя
+            curr_1layer_pos += row_step
+            old_step_2 = curr_2layer_pos
+            if row_step == 3:
+                row_step = 1
+            else:
+                row_step = 3
+
+            curr_2layer_pos += row_step
+
+            temp += triangle_list[current_layer + old_step_2:current_layer + curr_2layer_pos] # часть треугольника из 2 слоя
+
+            compressed_list.append(temp)
+            crnt_triangle += 1
+
+        prev_layer = current_layer + next_layer
+        next_layer -= 2
+        current_layer = prev_layer + next_layer
+        next_layer -= 2
+
+    if any(j for j in compressed_list for x in j if x != j[0]) or len(triangle_list) == 1:
+        return triangle_list
+    return compress_triangle(compressed_list)
+
+list_string = compress_triangle(file_string)
+
+output_string = ''.join(i for i in list_string) # объединение списка в строку
+
+with open(output_file_path, 'w', encoding='UTF-8') as file:
+    file.write(output_string)
+print(file_string)
+print(output_string)
